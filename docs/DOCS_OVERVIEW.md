@@ -9,7 +9,7 @@ The `docs/kyber-vision-mobile-18-ref` directory contains JavaScript files, asset
 ## Additional Documentation
 
 - See [`API_REFERENCE.md`](API_REFERENCE.md) for documentation on API endpoints.
-- See [`DATABASE_SCHEMA_OVERVIEW.md`](DATABASE_SCHEMA_OVERVIEW.md) for details on the database schema.
+- See [`DATABASE_OVERVIEW.md`](DATABASE_OVERVIEW.md) for details on the database schema.
 
 ## Docs Directory Structure
 
@@ -17,7 +17,7 @@ The `docs/kyber-vision-mobile-18-ref` directory contains JavaScript files, asset
 docs
 ├── DOCS_OVERVIEW.md         # entry point for all documentation
 ├── API_REFERENCE.md         # API endpoints
-├── DATABASE_SCHEMA_OVERVIEW.md
+├── DATABASE_OVERVIEW.md
 └── kyber-vision-mobile-18-ref/   # old JS files for conversion
 ```
 

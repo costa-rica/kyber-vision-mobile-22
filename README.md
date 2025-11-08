@@ -1,6 +1,6 @@
 ![Kyber Vision Mobile Logo](./src/assets/images/multi-use/kyberVisionLogo01.png)
 
-#### v 0.21.0
+#### v 0.22.0
 
 ## Overview
 
@@ -14,7 +14,7 @@ The app is built using React Native and Expo and TypeScript. Volley ball trainin
 ├── CLAUDE.md
 ├── docs
 │   ├── API_REFERENCE.md
-│   ├── DATABASE_SCHEMA_OVERVIEW.md
+│   ├── DATABASE_OVERVIEW.md
 │   ├── DOCS_OVERVIEW.md
 │   ├── kyber-vision-mobile-18-ref
 │   └── TS_CONVERSION_STATUS.md
@@ -119,11 +119,11 @@ The app is built using React Native and Expo and TypeScript. Volley ball trainin
 └── tsconfig.json
 ```
 
-## Kyber Vision Mobile 21 TypeScript Documentation
+## Kyber Vision Mobile 22 TypeScript Documentation
 
 - [Documentation Overview](./docs/DOCS_OVERVIEW.md)
   - [API Reference](./docs/API_REFERENCE.md)
-  - [Database Schema Overview](./docs/DATABASE_SCHEMA_OVERVIEW.md)
+  - [Database Overview](./docs/DATABASE_OVERVIEW.md)
 
 ## Google Sign In
 

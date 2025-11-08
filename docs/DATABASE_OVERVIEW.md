@@ -1,8 +1,6 @@
 # Database Schema Overview
 
-This document provides a comprehensive overview of the KyberVision20Db database schema. All tables use SQLite as the underlying database engine and are managed through Sequelize ORM.
-
-## KyberVision20Db Description
+This document provides a comprehensive overview of the KyberVision22Db database schema. All tables use SQLite as the underlying database engine and are managed through Sequelize ORM.
 
 - One class per table (`src/models/<Name>.ts`) with strong typings.
 - Centralized initialization and associations.
@@ -11,99 +9,108 @@ This document provides a comprehensive overview of the KyberVision20Db database 
 - src/ is the source directory for TypeScript files.
 - All tables have an updatedAt and createdAt field.
 
-## KyberVision20Db Directory Layout
+## Database / Project Architecture
 
-This is the directory layout of the KyberVision20Db package.
+### Project Structure
 
 ```
-.
-├── dist
-│   ├── index.d.ts
-│   ├── index.js
-│   └── models
-│       ├── _associations.d.ts
-│       ├── _associations.js
-│       ├── _connection.d.ts
-│       ├── _connection.js
-│       ├── _index.d.ts
-│       ├── _index.js
-│       ├── Action.d.ts
-│       ├── Action.js
-│       ├── Complex.d.ts
-│       ├── Complex.js
-│       ├── ContractLeagueTeam.d.ts
-│       ├── ContractLeagueTeam.js
-│       ├── ContractPlayerUser.d.ts
-│       ├── ContractPlayerUser.js
-│       ├── ContractTeamPlayer.d.ts
-│       ├── ContractTeamPlayer.js
-│       ├── ContractTeamUser.d.ts
-│       ├── ContractTeamUser.js
-│       ├── ContractUserAction.d.ts
-│       ├── ContractUserAction.js
-│       ├── ContractVideoAction.d.ts
-│       ├── ContractVideoAction.js
-│       ├── League.d.ts
-│       ├── League.js
-│       ├── OpponentServeTimestamp.d.ts
-│       ├── OpponentServeTimestamp.js
-│       ├── PendingInvitations.d.ts
-│       ├── PendingInvitations.js
-│       ├── Player.d.ts
-│       ├── Player.js
-│       ├── Script.d.ts
-│       ├── Script.js
-│       ├── Session.d.ts
-│       ├── Session.js
-│       ├── Team.d.ts
-│       ├── Team.js
-│       ├── User.d.ts
-│       ├── User.js
-│       ├── Video.d.ts
-│       └── Video.js
-├── docs
-│   ├── images
-│   │   └── kyberVisionLogo01.png
-│   └── MODELING_GUIDE.md
-├── package-lock.json
-├── package.json
-├── README.md
-├── src
-│   ├── index.ts
-│   └── models
-│       ├── _associations.ts
-│       ├── _connection.ts
-│       ├── _index.ts
-│       ├── Action.ts
-│       ├── Complex.ts
-│       ├── ContractLeagueTeam.ts
-│       ├── ContractPlayerUser.ts
-│       ├── ContractTeamPlayer.ts
-│       ├── ContractTeamUser.ts
-│       ├── ContractUserAction.ts
-│       ├── ContractVideoAction.ts
-│       ├── League.ts
-│       ├── OpponentServeTimestamp.ts
-│       ├── PendingInvitations.ts
-│       ├── Player.ts
-│       ├── Script.ts
-│       ├── Session.ts
-│       ├── Team.ts
-│       ├── User.ts
-│       └── Video.ts
-├── tsconfig.json
-└── tsconfig.tsbuildinfo
+NewsNexusDb09/
+├── src/                          # TypeScript source files
+│   ├── index.ts                  # Main entry point
+│   └── models/                   # Sequelize model definitions
+│       ├── _connection.ts        # Database connection setup
+│       ├── _index.ts            # Model registry and exports
+│       ├── _associations.ts     # All model relationships
+│       ├── Action.ts            # Action model
+│       ├── User.ts              # User management
+│       └── [ other models...] # Complete model suite
+├── dist/                        # Compiled JavaScript output
+│   ├── index.js                 # Compiled entry point
+│   ├── index.d.ts               # TypeScript declarations
+│   └── models/                  # Compiled models with .d.ts files
+├── docs/                        # Documentation
+└── package.json                 # Project configuration
 ```
 
-## Conventions
+## Template (copy for each new model)
 
-- **Model class name:** `PascalCase` (e.g., `ContractTeamUser`)
-- **Table name:** explicit `tableName: "snake_case"` or your existing table name
-- **Columns:** `snake_case` in DB; camelCase in TS properties
-- **Primary key:** `id` `INTEGER` auto-increment unless legacy says otherwise
-- **Timestamps:** `timestamps: true` unless legacy explicitly disabled
-- **Foreign keys:** `snake_case` (e.g., `userId` column in TS maps to `user_id` if using `underscored: true`)
-- **Types:** Use `InferAttributes<T>`, `InferCreationAttributes<T>`, `CreationOptional<T>`, `ForeignKey<T>`, `NonAttribute<T>`
+```ts
+// src/models/Example.ts
+import {
+  DataTypes,
+  Model,
+  InferAttributes,
+  InferCreationAttributes,
+  CreationOptional,
+  ForeignKey,
+  NonAttribute,
+} from "sequelize";
+import { sequelize } from "./_connection";
+
+export class Example extends Model<
+  InferAttributes<Example>,
+  InferCreationAttributes<Example>
+> {
+  declare id: CreationOptional<number>;
+  declare name: string;
+
+  // FK example:
+  // declare userId: ForeignKey<User["id"]>;
+  // declare user?: NonAttribute<User>;
+}
+
+export function initExample() {
+  Example.init(
+    {
+      id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+      name: { type: DataTypes.STRING, allowNull: false },
+      // userId: { type: DataTypes.INTEGER, allowNull: false }
+    },
+    {
+      sequelize,
+      tableName: "examples",
+      timestamps: true,
+    }
+  );
+  return Example;
+}
+```
+
+## Example src/models/\_index.ts
+
+```ts
+// SAMPLE of different proejctsrc/models/_index.ts
+import { sequelize } from "./_connection";
+
+import { initExample, Example } from "./Example";
+
+import { applyAssociations } from "./_associations";
+
+/** Initialize all models and associations once per process. */
+export function initModels() {
+  initExample();
+  applyAssociations();
+
+  return {
+    sequelize,
+    Example,
+  };
+}
+
+// 👇 Export named items for consumers
+export { sequelize, Example };
+
+// 👇 Export named items for consumers
+export { sequelize, Example };
+```
+
+### Database Configuration
+
+- **Database Type**: SQLite (via Sequelize ORM)
+- **Environment Variables**:
+  - `PATH_DATABASE`: Directory path for database file
+  - `NAME_DB`: Database filename
+- **No .env file required**: Inherits environment from importing application
 
 ## Core Entity Tables
 
@@ -114,14 +121,10 @@ This is the directory layout of the KyberVision20Db package.
 | Column                     | Type    | Constraints        | Description                        |
 | -------------------------- | ------- | ------------------ | ---------------------------------- |
 | id                         | INTEGER | PK, Auto Increment | Primary key                        |
-| username                   | STRING  | NULL               | User's unique username             |
-| firstName                  | STRING  | NULL               | User's first name                  |
-| lastName                   | STRING  | NULL               | User's last name                   |
+| username                   | STRING  | NOT NULL, UNIQUE   | User's unique username             |
 | password                   | STRING  | NOT NULL           | User's password (should be hashed) |
 | email                      | STRING  | NOT NULL, UNIQUE   | User's email address               |
 | isAdminForKvManagerWebsite | BOOLEAN | DEFAULT false      | Admin privileges flag              |
-| createdAt                  | DATE    | NOT NULL           | Record creation timestamp          |
-| updatedAt                  | DATE    | NOT NULL           | Record last update timestamp       |
 
 ### teams
 
@@ -136,8 +139,6 @@ This is the directory layout of the KyberVision20Db package.
 | description | STRING  | NULL                        | Team description        |
 | image       | STRING  | NULL                        | Team image path         |
 | visibility  | STRING  | NOT NULL, DEFAULT "Private" | Team visibility setting |
-| createdAt   | DATE    | NOT NULL                    | Record creation timestamp |
-| updatedAt   | DATE    | NOT NULL                    | Record last update timestamp |
 
 ### players
 
@@ -150,8 +151,6 @@ This is the directory layout of the KyberVision20Db package.
 | lastName  | STRING  | NOT NULL                                 | Player's last name  |
 | birthDate | DATE    | NULL                                     | Player's birth date |
 | image     | STRING  | DEFAULT "\_playerDefaultRedditAlien.png" | Player image path   |
-| createdAt | DATE    | NOT NULL                                 | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL                                 | Record last update timestamp |
 
 ### leagues
 
@@ -162,8 +161,6 @@ This is the directory layout of the KyberVision20Db package.
 | id       | INTEGER | PK, Auto Increment | Primary key              |
 | name     | STRING  | NOT NULL           | League name              |
 | category | STRING  | NOT NULL           | League category/division |
-| createdAt | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL           | Record last update timestamp |
 
 ### sessions
 
@@ -177,8 +174,6 @@ This is the directory layout of the KyberVision20Db package.
 | sessionDate          | DATE    | NOT NULL           | Date of session                   |
 | city                 | STRING  | NULL               | Session location                  |
 | sessionName          | STRING  | NULL               | Session name/description          |
-| createdAt            | DATE    | NOT NULL           | Record creation timestamp         |
-| updatedAt            | DATE    | NOT NULL           | Record last update timestamp      |
 
 ### videos
 
@@ -198,8 +193,6 @@ This is the directory layout of the KyberVision20Db package.
 | processingFailed                 | BOOLEAN | DEFAULT false      | Processing failure flag         |
 | youTubeVideoId                   | STRING  | NULL               | YouTube video ID                |
 | originalVideoFilename            | STRING  | NULL               | Original filename               |
-| createdAt                        | DATE    | NOT NULL           | Record creation timestamp       |
-| updatedAt                        | DATE    | NOT NULL           | Record last update timestamp    |
 
 ### scripts
 
@@ -211,8 +204,6 @@ This is the directory layout of the KyberVision20Db package.
 | sessionId                     | INTEGER | NOT NULL           | Reference to session |
 | timestampReferenceFirstAction | DATE    | NULL               | Reference timestamp  |
 | isScriptingLive               | BOOLEAN | DEFAULT false      | Live scripting flag  |
-| createdAt                     | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt                     | DATE    | NOT NULL           | Record last update timestamp |
 
 ### actions
 
@@ -229,13 +220,11 @@ This is the directory layout of the KyberVision20Db package.
 | subtype           | INTEGER | NULL                   | Action subtype code   |
 | quality           | STRING  | NOT NULL               | Action quality rating |
 | timestamp         | DATE    | NOT NULL               | Action timestamp      |
-| zone              | STRING  | NOT NULL               | Court/field zone      |
+| area              | STRING  | NOT NULL               | Court/field area      |
 | setNumber         | INTEGER | NOT NULL, MIN 1, MAX 5 | Set number (1-5)      |
 | scoreTeamAnalyzed | INTEGER | NOT NULL               | Analyzed team score   |
 | scoreTeamOther    | INTEGER | NOT NULL               | Opponent team score   |
 | rotation          | STRING  | NULL                   | Player rotation       |
-| createdAt         | DATE    | NOT NULL               | Record creation timestamp |
-| updatedAt         | DATE    | NOT NULL               | Record last update timestamp |
 
 **Indexes**: Unique index on (timestamp, scriptId)
 
@@ -247,8 +236,6 @@ This is the directory layout of the KyberVision20Db package.
 | ------ | ------- | ---------------------- | ---------------------------------- |
 | id     | INTEGER | PK, Auto Increment     | Primary key                        |
 | type   | STRING  | NOT NULL, REGEX /^K.+/ | Complex type (must start with 'K') |
-| createdAt | DATE    | NOT NULL               | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL               | Record last update timestamp |
 
 ## Relationship/Contract Tables
 
@@ -262,8 +249,6 @@ This is the directory layout of the KyberVision20Db package.
 | userId    | INTEGER | NOT NULL           | Reference to user    |
 | actionId  | INTEGER | NOT NULL           | Reference to action  |
 | sessionId | INTEGER | NOT NULL           | Reference to session |
-| createdAt | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL           | Record last update timestamp |
 
 **Indexes**: Unique index on (userId, actionId)
 
@@ -280,8 +265,6 @@ This is the directory layout of the KyberVision20Db package.
 | position             | STRING  | NULL               | Playing position       |
 | positionAbbreviation | STRING  | NULL               | Position abbreviation  |
 | role                 | STRING  | NULL               | Player's role on team  |
-| createdAt            | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt            | DATE    | NOT NULL           | Record last update timestamp |
 
 ### contractTeamUser
 
@@ -295,8 +278,6 @@ This is the directory layout of the KyberVision20Db package.
 | isSuperUser | BOOLEAN | NOT NULL, DEFAULT false | Super user privileges |
 | isAdmin     | BOOLEAN | NOT NULL, DEFAULT false | Admin privileges      |
 | isCoach     | BOOLEAN | NOT NULL, DEFAULT false | Coach privileges      |
-| createdAt   | DATE    | NOT NULL                | Record creation timestamp |
-| updatedAt   | DATE    | NOT NULL                | Record last update timestamp |
 
 ### contractLeagueTeam
 
@@ -307,8 +288,6 @@ This is the directory layout of the KyberVision20Db package.
 | id       | INTEGER | PK, Auto Increment | Primary key         |
 | leagueId | INTEGER | NOT NULL           | Reference to league |
 | teamId   | INTEGER | NOT NULL           | Reference to team   |
-| createdAt | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL           | Record last update timestamp |
 
 ### contractPlayerUser
 
@@ -319,8 +298,6 @@ This is the directory layout of the KyberVision20Db package.
 | id       | INTEGER | PK, Auto Increment | Primary key         |
 | playerId | INTEGER | NOT NULL, UNIQUE   | Reference to player |
 | userId   | INTEGER | NOT NULL, UNIQUE   | Reference to user   |
-| createdAt | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL           | Record last update timestamp |
 
 ### contractVideoAction
 
@@ -332,8 +309,6 @@ This is the directory layout of the KyberVision20Db package.
 | actionId           | INTEGER | NOT NULL           | Reference to action    |
 | videoId            | INTEGER | NULL               | Reference to video     |
 | deltaTimeInSeconds | FLOAT   | NULL, DEFAULT 0.0  | Time offset in seconds |
-| createdAt          | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt          | DATE    | NOT NULL           | Record last update timestamp |
 
 ## Specialized Tables
 
@@ -347,8 +322,6 @@ This is the directory layout of the KyberVision20Db package.
 | actionId            | INTEGER | NOT NULL           | Reference to action        |
 | timestampServiceOpp | DATE    | NOT NULL           | Opponent service timestamp |
 | serveType           | INTEGER | NOT NULL           | Type of serve              |
-| createdAt           | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt           | DATE    | NOT NULL           | Record last update timestamp |
 
 ### pendingInvitations
 
@@ -359,8 +332,27 @@ This is the directory layout of the KyberVision20Db package.
 | id     | INTEGER | PK, Auto Increment | Primary key           |
 | email  | STRING  | NOT NULL           | Invitee email address |
 | teamId | INTEGER | NOT NULL           | Reference to team     |
-| createdAt | DATE    | NOT NULL           | Record creation timestamp |
-| updatedAt | DATE    | NOT NULL           | Record last update timestamp |
+
+### pings
+
+**Purpose**: Tracks user activity pings with device information
+
+| Column              | Type    | Constraints           | Description                              |
+| ------------------- | ------- | --------------------- | ---------------------------------------- |
+| id                  | INTEGER | PK, Auto Increment    | Primary key                              |
+| userId              | INTEGER | NOT NULL              | Reference to user                        |
+| serverTimestamp     | DATE(6) | NOT NULL, DEFAULT NOW | Server-side UTC timestamp (microseconds) |
+| userDeviceTimestamp | DATE(6) | NULL                  | Client-provided UTC timestamp            |
+| endpointName        | STRING  | NULL                  | Endpoint name invoked for this ping      |
+| deviceName          | STRING  | NULL                  | Device name (e.g., "iPhone 15 Pro")      |
+| deviceType          | STRING  | NULL                  | Device type (e.g., "Tablet")             |
+| isTablet            | BOOLEAN | NULL                  | Whether device is a tablet               |
+| manufacturer        | STRING  | NULL                  | Device manufacturer (e.g., "Apple")      |
+| modelName           | STRING  | NULL                  | Device model name                        |
+| osName              | STRING  | NULL                  | Operating system name (e.g., "iOS")      |
+| osVersion           | STRING  | NULL                  | Operating system version                 |
+
+**Indexes**: Index on userId, index on serverTimestamp
 
 ## Key Relationships
 
@@ -399,47 +391,3 @@ This is the directory layout of the KyberVision20Db package.
 - Boolean fields default to `false` where applicable
 - File paths and URLs are stored as strings with nullable constraints
 - Timestamps are stored as DATE types and can include time components
-
-## Template (copy for each model)
-
-```ts
-// src/models/Example.ts
-import {
-	DataTypes,
-	Model,
-	InferAttributes,
-	InferCreationAttributes,
-	CreationOptional,
-	ForeignKey,
-	NonAttribute,
-} from "sequelize";
-import { sequelize } from "./_connection";
-
-export class Example extends Model<
-	InferAttributes<Example>,
-	InferCreationAttributes<Example>
-> {
-	declare id: CreationOptional<number>;
-	declare name: string;
-
-	// FK example:
-	// declare userId: ForeignKey<User["id"]>;
-	// declare user?: NonAttribute<User>;
-}
-
-export function initExample() {
-	Example.init(
-		{
-			id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-			name: { type: DataTypes.STRING, allowNull: false },
-			// userId: { type: DataTypes.INTEGER, allowNull: false }
-		},
-		{
-			sequelize,
-			tableName: "examples",
-			timestamps: true,
-		}
-	);
-	return Example;
-}
-```

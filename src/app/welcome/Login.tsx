@@ -15,6 +15,7 @@ import ButtonKvStd from "../../components/buttons/ButtonKvStd";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../reducers/user";
 import ModalForgotPasswordRequest from "../../components/modals/ModalForgotPasswordRequest";
+import { getDeviceInfo } from "../../utils/deviceInfo";
 
 interface ModalComponentAndSetterObject {
 	modalComponent: React.ReactElement;
@@ -46,6 +47,7 @@ export default function Login({ navigation }: LoginScreenProps) {
 			email: email,
 			password: password,
 			userDeviceTimestamp: new Date().toISOString(),
+			...getDeviceInfo(),
 		};
 
 		try {
