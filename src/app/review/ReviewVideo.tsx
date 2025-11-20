@@ -182,7 +182,12 @@ export default function ReviewVideo({ navigation }: Props) {
 			}
 		} catch (error) {
 			console.error("Error requesting montage video:", error);
-			alert("Failed to request montage video");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to request montage video",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -204,7 +209,12 @@ export default function ReviewVideo({ navigation }: Props) {
 				}
 			);
 			if (response.status !== 200) {
-				alert(`There was a server error: ${response.status}`);
+				setInfoModalContent({
+					title: "Error",
+					message: `There was a server error: ${response.status}`,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 				return;
 			}
 			const contentType = response.headers.get("Content-Type");
