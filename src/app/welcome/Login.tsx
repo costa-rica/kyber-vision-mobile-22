@@ -15,6 +15,7 @@ import ButtonKvStd from "../../components/buttons/ButtonKvStd";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../reducers/user";
 import ModalForgotPasswordRequest from "../../components/modals/ModalForgotPasswordRequest";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import { getDeviceInfo } from "../../utils/deviceInfo";
 
 interface ModalComponentAndSetterObject {
@@ -36,6 +37,12 @@ export default function Login({ navigation }: LoginScreenProps) {
 	const [showPassword, setShowPassword] = useState(false);
 	const [isVisibleForgotPasswordModal, setIsVisibleForgotPasswordModal] =
 		useState(false);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const handleClickLogin = async () => {
 		console.log(
@@ -85,11 +92,21 @@ export default function Login({ navigation }: LoginScreenProps) {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				Alert.alert("Login Error", errorMessage);
+				setInfoModalContent({
+					title: "Login Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Login error:", error);
-			Alert.alert("Login Error", `Network error. ${error}`);
+			setInfoModalContent({
+				title: "Login Error",
+				message: `Network error. ${error}`,
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -139,6 +156,20 @@ export default function Login({ navigation }: LoginScreenProps) {
 	};
 
 	const whichModalToDisplay = (): ModalComponentAndSetterObject | undefined => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: setIsVisibleInfoModal,
+			};
+		}
 		if (isVisibleForgotPasswordModal) {
 			return {
 				modalComponent: (
