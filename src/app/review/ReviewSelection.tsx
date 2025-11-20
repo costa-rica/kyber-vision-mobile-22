@@ -6,12 +6,12 @@ import {
 	Dimensions,
 	TouchableOpacity,
 	FlatList,
-	Alert,
 	ViewStyle,
 	TextStyle,
 	ListRenderItem,
 } from "react-native";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateTeamsArray, Team } from "../../reducers/team";
@@ -74,6 +74,12 @@ export default function ReviewSelection({ navigation }: ReviewSelectionProps) {
 	const [displayTribeList, setDisplayTribeList] = useState(false);
 	const dispatch = useDispatch();
 	const [videoArray, setVideoArray] = useState<VideoWithSelection[]>([]);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const handleTribeSelect = (selectedId: number) => {
 		const updatedArray = teamReducer.teamsArray.map((tribe) => ({
@@ -251,10 +257,12 @@ export default function ReviewSelection({ navigation }: ReviewSelectionProps) {
 
 				console.log(" --- finished getting Actions and other stuff ---");
 			} catch (error) {
-				Alert.alert(
-					"Error fetching actions for match",
-					(error as Error).message
-				);
+				setInfoModalContent({
+					title: "Error fetching actions for match",
+					message: (error as Error).message,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 				return;
 			}
 		}
@@ -325,11 +333,31 @@ export default function ReviewSelection({ navigation }: ReviewSelectionProps) {
 		</TouchableOpacity>
 	);
 
+	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
+		return undefined;
+	};
+
 	return (
 		<ScreenFrameWithTopChildrenSmall
 			navigation={navigation}
 			topChildren={topChildren}
 			topHeight={120}
+			modalComponentAndSetterObject={whichModalToDisplay()}
 		>
 			<View style={styles.container}>
 				<View style={styles.containerTop}>
