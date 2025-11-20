@@ -6,12 +6,12 @@ import {
   Dimensions,
   TouchableOpacity,
   FlatList,
-  Alert,
   ViewStyle,
   TextStyle,
   ListRenderItem,
 } from "react-native";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import { updateTeamsArray, Team } from "../../reducers/team";
@@ -60,6 +60,12 @@ export default function UploadVideo({ navigation }: UploadVideoProps) {
   const [isVisibleModalDeleteVideo, setIsVisibleModalDeleteVideo] = useState(false);
   const [userVideosArray, setUserVideosArray] = useState<UserVideo[]>([]);
   const [containerBottomExpanded, setContainerBottomExpanded] = useState(false);
+  const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState({
+    title: "",
+    message: "",
+    variant: "info" as "info" | "success" | "error" | "warning",
+  });
 
   useEffect(() => {
     fetchUserVideosArray();
@@ -130,7 +136,12 @@ export default function UploadVideo({ navigation }: UploadVideoProps) {
   const handleSelectVideo = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission denied", "We need access to your media.");
+      setInfoModalContent({
+        title: "Permission denied",
+        message: "We need access to your media.",
+        variant: "warning",
+      });
+      setIsVisibleInfoModal(true);
       return;
     }
     
@@ -183,7 +194,12 @@ export default function UploadVideo({ navigation }: UploadVideoProps) {
       const errorMessage =
         resJson?.error ||
         `There was a server error (and no resJson): ${response.status}`;
-      alert(errorMessage);
+      setInfoModalContent({
+        title: "Error",
+        message: errorMessage,
+        variant: "error",
+      });
+      setIsVisibleInfoModal(true);
     }
   };
 
@@ -235,12 +251,22 @@ export default function UploadVideo({ navigation }: UploadVideoProps) {
       console.log("Upload response:", data);
       dispatch(updateUploadReducerLoading(false));
       setIsVisibleModalUploadVideo(false);
-      Alert.alert("Success", "Video sent successfully!");
+      setInfoModalContent({
+        title: "Success",
+        message: "Video sent successfully!",
+        variant: "success",
+      });
+      setIsVisibleInfoModal(true);
     } catch (error) {
       clearTimeout(timeout);
       console.error("Upload error:", error);
       dispatch(updateUploadReducerLoading(false));
-      Alert.alert("Error", "Failed to send video.");
+      setInfoModalContent({
+        title: "Error",
+        message: "Failed to send video.",
+        variant: "error",
+      });
+      setIsVisibleInfoModal(true);
     }
   };
 
@@ -264,10 +290,20 @@ export default function UploadVideo({ navigation }: UploadVideoProps) {
     if (response.status === 200) {
       fetchUserVideosArray();
       const resJson = await response.json();
-      alert(resJson.message);
+      setInfoModalContent({
+        title: "Success",
+        message: resJson.message,
+        variant: "success",
+      });
+      setIsVisibleInfoModal(true);
       setIsVisibleModalDeleteVideo(false);
     } else {
-      alert(`There was a server error: ${response.status}`);
+      setInfoModalContent({
+        title: "Error",
+        message: `There was a server error: ${response.status}`,
+        variant: "error",
+      });
+      setIsVisibleInfoModal(true);
     }
   };
 
@@ -285,6 +321,21 @@ export default function UploadVideo({ navigation }: UploadVideoProps) {
         modalComponent: <ModalUploadVideoYesNo onPressYes={handleDeleteVideo} />,
         useState: isVisibleModalDeleteVideo,
         useStateSetter: () => setIsVisibleModalDeleteVideo(false),
+      };
+    }
+
+    if (isVisibleInfoModal) {
+      return {
+        modalComponent: (
+          <ModalInformationOk
+            title={infoModalContent.title}
+            message={infoModalContent.message}
+            variant={infoModalContent.variant}
+            onClose={() => setIsVisibleInfoModal(false)}
+          />
+        ),
+        useState: isVisibleInfoModal,
+        useStateSetter: () => setIsVisibleInfoModal(false),
       };
     }
 
