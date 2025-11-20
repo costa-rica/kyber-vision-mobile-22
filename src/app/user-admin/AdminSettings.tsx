@@ -659,16 +659,15 @@ export default function AdminSettings({
         });
       }}
       onLongPress={() => {
-        console.log("---- user's userReducer [contractTeamUserArray]----");
-        console.log(JSON.stringify(userReducer.contractTeamUserArray, null, 2));
-        console.log("---- item: SquadMember----");
-        console.log(JSON.stringify(item, null, 2));
-
         // Check if user is trying to delete themselves
-        if (Number(item.userId) === Number(userReducer.contractTeamUserArray[0]?.userId)) {
+        if (
+          Number(item.userId) ===
+          Number(userReducer.contractTeamUserArray[0]?.userId)
+        ) {
           setInfoModalContent({
             title: "Cannot delete yourself",
-            message: "Only another Admin can delete an admin. There must be at least one admin on the squad.",
+            message:
+              "Only another Admin can delete an admin. There must be at least one admin on the squad.",
             variant: "warning",
           });
           setIsVisibleInfoModal(true);
