@@ -38,7 +38,8 @@ This is a React Native Expo TypeScript app. The main entry point is `src/app/ind
 
 - **ScreenFrame**: This component is used for maintaining consistency amongst screens in terms of screen framing - including a back button and a background image (top children prop).
 - **ButtonKvImage**: Custom button component for image-based buttons
-- **ModalInformationOk**: Use instead of Alert.alert for simple "OK" confirmations. Supports info, success, error, and warning variants. Keep Alert.alert for Yes/No confirmation dialogs.
+- **ModalInformationOk**: Use instead of Alert.alert for simple "OK" confirmations. Supports info, success, error, and warning variants.
+- **ModalInformationYesOrNo**: Use instead of Alert.alert for Yes/No confirmation dialogs.
 - Components use TypeScript with proper prop typing
 
 ### Asset Management
