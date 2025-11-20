@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, Alert, ViewStyle } from "react-native";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import ScriptingLivePortrait from "../../components/scripting/ScriptingLivePortrait";
 import ScriptingLiveLandscape from "../../components/scripting/ScriptingLiveLandscape";
 import {
@@ -76,6 +77,13 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
     scriptingPlayerDropdownIsVisible,
     setScriptingPlayerDropdownIsVisible,
   ] = useState(false);
+
+  const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState({
+    title: "",
+    message: "",
+    variant: "info" as "info" | "success" | "error" | "warning",
+  });
 
   // Set only one to true all others to false
   const setDropdownVisibility = (dropdownName: string) => {
@@ -275,7 +283,12 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
 
     // Stop if match already won (best of 5 → first to 3)
     if (matchSetsWon.teamAnalyzed === 3 || matchSetsWon.teamOpponent === 3) {
-      Alert.alert("Reached end of game", "Please send the script.");
+      setInfoModalContent({
+        title: "Reached end of game",
+        message: "Please send the script.",
+        variant: "info",
+      });
+      setIsVisibleInfoModal(true);
       return;
     }
 
@@ -1202,12 +1215,32 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
   // ---- Court Lines Visibility ----
   const [isVisibleCourtLines, setIsVisibleCourtLines] = useState(true);
 
+  const whichModalToDisplay = () => {
+    if (isVisibleInfoModal) {
+      return {
+        modalComponent: (
+          <ModalInformationOk
+            title={infoModalContent.title}
+            message={infoModalContent.message}
+            variant={infoModalContent.variant}
+            onClose={() => setIsVisibleInfoModal(false)}
+          />
+        ),
+        useState: isVisibleInfoModal,
+        useStateSetter: () => setIsVisibleInfoModal(false),
+      };
+    }
+
+    return undefined;
+  };
+
   return orientation == "portrait" ? (
     <ScreenFrameWithTopChildrenSmall
       navigation={navigation}
       topChildren={topChildren}
       topHeight="10%"
       onBackPress={handleExitScriptingLive}
+      modalComponentAndSetterObject={whichModalToDisplay()}
     >
       <ScriptingLivePortrait
         combinedGestures={combinedGestures}
