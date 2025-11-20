@@ -86,8 +86,11 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
     variant: "info" as "info" | "success" | "error" | "warning",
   });
 
-  const [isVisibleRallyServerModal, setIsVisibleRallyServerModal] = useState(false);
-  const rallyServerResolverRef = useRef<((value: "analyzed" | "opponent" | null) => void) | null>(null);
+  const [isVisibleRallyServerModal, setIsVisibleRallyServerModal] =
+    useState(false);
+  const rallyServerResolverRef = useRef<
+    ((value: "analyzed" | "opponent" | null) => void) | null
+  >(null);
 
   // Set only one to true all others to false
   const setDropdownVisibility = (dropdownName: string) => {
@@ -1212,8 +1215,8 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
       return {
         modalComponent: (
           <ModalInformationYesNoCancel
-            title="Current rally server not assigned"
-            message="Who should be the current rally server?"
+            title="Which team is serving?"
+            message=""
             yesButtonText="Analyzed"
             noButtonText="Opponent"
             cancelButtonText="Cancel"

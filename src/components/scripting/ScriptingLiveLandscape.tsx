@@ -246,7 +246,7 @@ export default function ScriptingLiveLandscape(
     width: 0,
     height:
       scriptReducer.coordsScriptLiveLandscapeContainerMiddleBottom.height!,
-    zIndex: 5,
+    zIndex: 1,
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: "gray",
@@ -259,7 +259,7 @@ export default function ScriptingLiveLandscape(
     width: 0,
     height:
       scriptReducer.coordsScriptLiveLandscapeContainerMiddleBottom.height!,
-    zIndex: 5,
+    zIndex: 1,
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: "gray",
@@ -271,7 +271,7 @@ export default function ScriptingLiveLandscape(
     top:
       scriptReducer.coordsScriptLiveLandscapeContainerMiddleBottom.height! *
       0.5,
-    zIndex: 5,
+    zIndex: 1,
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: "gray",
