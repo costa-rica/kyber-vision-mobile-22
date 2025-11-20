@@ -6,7 +6,6 @@ import {
 	Dimensions,
 	TouchableOpacity,
 	FlatList,
-	Alert,
 } from "react-native";
 // import { GestureHandlerRootView } from "react-native-gesture-handler";
 import YoutubePlayer from "react-native-youtube-iframe";
@@ -16,6 +15,7 @@ import { RootStackParamList } from "../../types/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "../../types/store";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import ButtonKvNoDefault from "../../components/buttons/ButtonKvNoDefault";
 import ButtonKvNoDefaultTextOnly from "../../components/buttons/ButtonKvNoDefaultTextOnly";
 import Timeline from "../../components/review/Timeline";
@@ -44,6 +44,12 @@ export default function ScriptingSyncVideo({ navigation }: Props) {
 	const userReducer = useSelector((state: RootState) => state.user);
 
 	const [scriptsArray, setScriptsArray] = useState<ScriptData[]>([]);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const fetchScriptsArray = async () => {
 		console.log("--- > in fetchScriptsArray");
@@ -53,7 +59,12 @@ export default function ScriptingSyncVideo({ navigation }: Props) {
 		);
 
 		if (!syncReducer.syncReducerSelectedVideoObject?.session.id) {
-			Alert.alert("Error", "No video selected for synchronization");
+			setInfoModalContent({
+				title: "Error",
+				message: "No video selected for synchronization",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			return;
 		}
 
@@ -91,11 +102,21 @@ export default function ScriptingSyncVideo({ navigation }: Props) {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+				title: "Error",
+				message: errorMessage,
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error fetching scripts array:", error);
-			alert("Failed to fetch scripts data");
+			setInfoModalContent({
+			title: "Error",
+			message: "Failed to fetch scripts data",
+			variant: "error",
+		});
+		setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -176,12 +197,22 @@ export default function ScriptingSyncVideo({ navigation }: Props) {
 		const selectedScript = scriptsArray.find((item) => item.selected);
 
 		if (!selectedScript) {
-			alert("Please select a script");
+			setInfoModalContent({
+			title: "No script selected",
+			message: "Please select a script",
+			variant: "warning",
+		});
+		setIsVisibleInfoModal(true);
 			return;
 		}
 
 		if (!syncReducer.syncReducerSelectedVideoObject?.id) {
-			alert("No video selected");
+			setInfoModalContent({
+			title: "No video selected",
+			message: "No video selected",
+			variant: "warning",
+		});
+		setIsVisibleInfoModal(true);
 			return;
 		}
 
@@ -222,16 +253,31 @@ export default function ScriptingSyncVideo({ navigation }: Props) {
 				});
 
 				setScriptsArray(tempArray);
-				alert("Script delta time modified successfully");
+				setInfoModalContent({
+				title: "Success",
+				message: "Script delta time modified successfully",
+				variant: "success",
+			});
+			setIsVisibleInfoModal(true);
 			} else {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+				title: "Error",
+				message: errorMessage,
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error syncing scripts:", error);
-			alert("Failed to sync scripts to session");
+			setInfoModalContent({
+			title: "Error",
+			message: "Failed to sync scripts to session",
+			variant: "error",
+		});
+		setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -256,11 +302,31 @@ export default function ScriptingSyncVideo({ navigation }: Props) {
 		</ButtonKvNoDefault>
 	);
 
+	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
+		return undefined;
+	};
+
 	return (
 		<ScreenFrameWithTopChildrenSmall
 			navigation={navigation}
 			topHeight="20%"
 			topChildren={<Text>Synchronize Video</Text>}
+			modalComponentAndSetterObject={whichModalToDisplay()}
 		>
 			<View style={styles.container}>
 				<View style={styles.containerTop}>
