@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Alert } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
 
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
+import ModalInformationYesOrNo from "../../components/modals/ModalInformationYesOrNo";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 
 import { useDispatch, useSelector } from "react-redux";
 import * as ScreenOrientation from "expo-screen-orientation";
@@ -57,6 +58,14 @@ export default function ReviewVideo({ navigation }: Props) {
 	const [playing, setPlaying] = useState(false);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
+	const [isVisibleConfirmModal, setIsVisibleConfirmModal] = useState(false);
+	const [selectionsCount, setSelectionsCount] = useState(0);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	useEffect(() => {
 		const interval = setInterval(async () => {
@@ -116,26 +125,12 @@ export default function ReviewVideo({ navigation }: Props) {
 	};
 
 	const handlePressRequestMontageVideo = async () => {
-		const selectionsCount = reviewReducer.reviewReducerActionsArray.filter(
+		const count = reviewReducer.reviewReducerActionsArray.filter(
 			(action) => action.isDisplayed
 		).length;
-		if (selectionsCount > 5) {
-			Alert.alert(
-				`You are about to request a montage of ${selectionsCount} actions`,
-				"Are you sure you want to proceed?",
-				[
-					{
-						text: "No",
-						onPress: () => console.log("❌ No Pressed"),
-						style: "cancel",
-					},
-					{
-						text: "Yes",
-						onPress: () => requestMontageVideo(),
-					},
-				],
-				{ cancelable: false }
-			);
+		if (count > 5) {
+			setSelectionsCount(count);
+			setIsVisibleConfirmModal(true);
 		} else {
 			requestMontageVideo();
 		}
@@ -166,15 +161,23 @@ export default function ReviewVideo({ navigation }: Props) {
 			);
 
 			if (response.status !== 200) {
-				alert(`There was a server error: ${response.status}`);
+				setInfoModalContent({
+					title: "Error",
+					message: `There was a server error: ${response.status}`,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 				return;
 			} else {
 				const contentType = response.headers.get("Content-Type");
 				if (contentType?.includes("application/json")) {
 					await response.json();
-					Alert.alert("Video request sent", "Check your email for the video.", [
-						{ text: "OK", onPress: () => console.log("OK Pressed") },
-					]);
+					setInfoModalContent({
+						title: "Video request sent",
+						message: "Check your email for the video.",
+						variant: "success",
+					});
+					setIsVisibleInfoModal(true);
 				}
 			}
 		} catch (error) {
@@ -212,15 +215,64 @@ export default function ReviewVideo({ navigation }: Props) {
 
 			console.log(" --- finished getting Actions and other stuff ---");
 		} catch (error) {
-			Alert.alert(
-				"Error fetching actions for match",
-				error instanceof Error ? error.message : "Unknown error"
-			);
+			setInfoModalContent({
+				title: "Error fetching actions for match",
+				message: error instanceof Error ? error.message : "Unknown error",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
+	const whichModalToDisplay = () => {
+		if (isVisibleConfirmModal) {
+			return {
+				modalComponent: (
+					<ModalInformationYesOrNo
+						title={`You are about to request a montage of ${selectionsCount} actions`}
+						message="Are you sure you want to proceed?"
+						noButtonText="Cancel"
+						onYes={() => {
+							requestMontageVideo();
+							setIsVisibleConfirmModal(false);
+						}}
+						onNo={() => {
+							console.log("❌ No Pressed");
+							setIsVisibleConfirmModal(false);
+						}}
+						onClose={() => {
+							setIsVisibleConfirmModal(false);
+						}}
+					/>
+				),
+				useState: isVisibleConfirmModal,
+				useStateSetter: () => setIsVisibleConfirmModal(false),
+			};
+		}
+
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
+		return undefined;
+	};
+
 	return orientation === "portrait" ? (
-		<ScreenFrameWithTopChildrenSmall navigation={navigation}>
+		<ScreenFrameWithTopChildrenSmall
+			navigation={navigation}
+			modalComponentAndSetterObject={whichModalToDisplay()}
+		>
 			<ReviewVideoPortrait
 				orientation={orientation}
 				playerRef={playerRef}
