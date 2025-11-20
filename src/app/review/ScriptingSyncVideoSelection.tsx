@@ -7,12 +7,12 @@ import {
 	Dimensions,
 	TouchableOpacity,
 	FlatList,
-	Alert,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
 
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../types/store";
 import { updateTeamsArray } from "../../reducers/team";
@@ -30,6 +30,12 @@ export default function ScriptingSyncVideoSelection({ navigation }: Props) {
 	const [displayTribeList, setDisplayTribeList] = useState(false);
 	const dispatch = useDispatch();
 	const [userVideosArray, setUserVideosArray] = useState<VideoObject[]>([]);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const handleTribeSelect = (selectedId: number) => {
 		const updatedArray = teamReducer.teamsArray.map((tribe) => ({
@@ -136,11 +142,21 @@ export default function ScriptingSyncVideoSelection({ navigation }: Props) {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+				title: "Error",
+				message: errorMessage,
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error fetching user videos:", error);
-			alert("Failed to fetch videos");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to fetch videos",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -151,10 +167,12 @@ export default function ScriptingSyncVideoSelection({ navigation }: Props) {
 
 	useEffect(() => {
 		if (userReducer.token === "offline") {
-			Alert.alert(
-				"Offline Mode",
-				"Offline mode not supported yet -- setup for fetchUserVideosArray()"
-			);
+			setInfoModalContent({
+				title: "Offline Mode",
+				message: "Offline mode not supported yet -- setup for fetchUserVideosArray()",
+				variant: "info",
+			});
+			setIsVisibleInfoModal(true);
 		} else {
 			fetchUserVideosArray();
 		}
@@ -199,11 +217,31 @@ export default function ScriptingSyncVideoSelection({ navigation }: Props) {
 		</TouchableOpacity>
 	);
 
+	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
+		return undefined;
+	};
+
 	return (
 		<ScreenFrameWithTopChildrenSmall
 			navigation={navigation}
 			topChildren={topChildren}
 			topHeight="20%"
+			modalComponentAndSetterObject={whichModalToDisplay()}
 		>
 			<View style={styles.container}>
 				<View style={styles.containerTop}>
