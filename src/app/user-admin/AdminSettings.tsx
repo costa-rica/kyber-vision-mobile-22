@@ -27,6 +27,7 @@ import ButtonKvNoDefault from "../../components/buttons/ButtonKvNoDefault";
 import ButtonKvNoDefaultTextOnly from "../../components/buttons/ButtonKvNoDefaultTextOnly";
 import ModalTeamAddPlayer from "../../components/modals/ModalTeamAddPlayer";
 import ModalAdminSettingsInviteToSquad from "../../components/modals/ModalAdminSettingsInviteToSquad";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import { RootState } from "../../types/store";
 import { AdminSettingsScreenProps } from "../../types/navigation";
 import { PlayerObject } from "../../types/user-admin";
@@ -50,6 +51,12 @@ export default function AdminSettings({
 		useState(false);
 	const [isVisibleInviteToSquadModal, setIsVisibleInviteToSquadModal] =
 		useState(false);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	// Triggers whenever the screen is focused
 	useFocusEffect(
@@ -109,11 +116,21 @@ export default function AdminSettings({
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error fetching players:", error);
-			alert("Failed to fetch players");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to fetch players",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -148,11 +165,21 @@ export default function AdminSettings({
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error fetching squad members:", error);
-			alert("Failed to fetch squad members");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to fetch squad members",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -193,11 +220,21 @@ export default function AdminSettings({
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error updating team visibility:", error);
-			alert("Failed to update team visibility");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to update team visibility",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -211,6 +248,21 @@ export default function AdminSettings({
 	};
 
 	const whichModalToDisplay = (): ModalComponentAndSetterObject | undefined => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: setIsVisibleInfoModal,
+			};
+		}
+
 		if (isVisibleModalAddPlayer) {
 			return {
 				modalComponent: (
@@ -270,11 +322,21 @@ export default function AdminSettings({
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error adding player to team:", error);
-			alert("Failed to add player to team");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to add player to team",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 
 		setIsVisibleModalAddPlayer(false);
@@ -313,17 +375,32 @@ export default function AdminSettings({
 			}
 
 			if (response.ok && resJson) {
-				Alert.alert("Player removed successfully");
 				fetchPlayers();
+				setInfoModalContent({
+					title: "Player removed successfully",
+					message: "",
+					variant: "success",
+				});
+				setIsVisibleInfoModal(true);
 			} else {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error removing player:", error);
-			alert("Failed to remove player");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to remove player",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 
 		setIsVisibleRemovePlayerModal(false);
@@ -362,19 +439,39 @@ export default function AdminSettings({
 				fetchSquadMembers();
 
 				if (response.status === 201) {
-					Alert.alert("Squad member added successfully");
+					setInfoModalContent({
+						title: "Squad member added successfully",
+						message: "",
+						variant: "success",
+					});
+					setIsVisibleInfoModal(true);
 				} else {
-					Alert.alert("Sent invitation email to non-registered user");
+					setInfoModalContent({
+						title: "Sent invitation email to non-registered user",
+						message: "",
+						variant: "info",
+					});
+					setIsVisibleInfoModal(true);
 				}
 			} else {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error inviting to squad:", error);
-			alert("Failed to invite to squad");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to invite to squad",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 
 		setIsVisibleInviteToSquadModal(false);
@@ -451,17 +548,32 @@ export default function AdminSettings({
 			}
 
 			if (response.ok && resJson) {
-				Alert.alert("Squad member removed successfully");
 				fetchSquadMembers();
+				setInfoModalContent({
+					title: "Squad member removed successfully",
+					message: "",
+					variant: "success",
+				});
+				setIsVisibleInfoModal(true);
 			} else {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error removing squad member:", error);
-			alert("Failed to remove squad member");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to remove squad member",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
