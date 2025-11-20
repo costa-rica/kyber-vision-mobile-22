@@ -5,13 +5,13 @@ import {
 	Dimensions,
 	FlatList,
 	TouchableOpacity,
-	Alert,
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../types/store";
 import ButtonKvNoDefaultTextOnly from "../../components/buttons/ButtonKvNoDefaultTextOnly";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import WarningTriangle from "../../assets/images/scripting/warningTriangle.svg";
 import Tribe from "../../assets/images/welcome/Tribe.svg";
 import {
@@ -53,6 +53,12 @@ export default function ScriptingLiveSelectPlayers({
 	const teamReducer = useSelector((state: RootState) => state.team);
 	const dispatch = useDispatch<AppDispatch>();
 	// const [displayWarning, setDisplayWarning] = useState(false);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const topChildren = (
 		<View style={styles.vwTopChildren}>
@@ -68,7 +74,12 @@ export default function ScriptingLiveSelectPlayers({
 		const selectedTeam = teamReducer.teamsArray.find((tribe) => tribe.selected);
 
 		if (!selectedTeam) {
-			Alert.alert("Error", "No team selected");
+			setInfoModalContent({
+				title: "Error",
+				message: "No team selected",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			return;
 		}
 
@@ -105,11 +116,21 @@ export default function ScriptingLiveSelectPlayers({
 			} else {
 				const errorMessage =
 					resJson?.error || `There was a server error: ${response.status}`;
-				Alert.alert("Error", errorMessage);
+				setInfoModalContent({
+				title: "Error",
+				message: errorMessage,
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Fetch players error:", error);
-			Alert.alert("Error", "Failed to fetch players");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to fetch players",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -217,11 +238,31 @@ export default function ScriptingLiveSelectPlayers({
 		[dispatch, scriptReducer.playersArray]
 	);
 
+	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
+		return undefined;
+	};
+
 	return (
 		<ScreenFrameWithTopChildrenSmall
 			navigation={navigation}
 			topChildren={topChildren}
 			sizeOfLogo={0}
+			modalComponentAndSetterObject={whichModalToDisplay()}
 		>
 			<View style={styles.container}>
 				<View style={styles.containerTop}>
