@@ -15,6 +15,7 @@ import BtnVisibilityDown from "../../assets/images/review/btnVisibilityDown.svg"
 import BtnVisibilityUp from "../../assets/images/review/btnVisibilityUp.svg";
 import BtnUserCardRemoveUser from "../../assets/images/user-admin/btnUserCardRemoveUser.svg";
 import { updateSquadMembersArray, SquadMember } from "../../reducers/team";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import { RootState } from "../../types/store";
 import { AdminSettingsUserCardScreenProps } from "../../types/navigation";
 
@@ -33,6 +34,12 @@ export default function AdminSettingsUserCard({
 	const [showRolesOptions, setShowRolesOptions] = useState(false);
 	const [rolesArray, setRolesArray] = useState<string[]>([]);
 	const dispatch = useDispatch();
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const selectedTeam = teamReducer.teamsArray.filter((team) => team.selected)[0];
 	const selectedTeamId = teamReducer.teamsArray.find((t) => t.selected)?.id;
@@ -58,9 +65,12 @@ export default function AdminSettingsUserCard({
 
 	const handleSelectRole = async (role: string): Promise<void> => {
 		if (role === "Admin" && userObject.email === userReducer.user.email) {
-			alert(
-				"You cannot modify your own admin status. Another admin must do this."
-			);
+			setInfoModalContent({
+				title: "Cannot modify own status",
+				message: "You cannot modify your own admin status. Another admin must do this.",
+				variant: "warning",
+			});
+			setIsVisibleInfoModal(true);
 			return;
 		}
 
@@ -105,11 +115,21 @@ export default function AdminSettingsUserCard({
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error updating role:", error);
-			alert("Failed to update role");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to update role",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -157,17 +177,50 @@ export default function AdminSettingsUserCard({
 			}
 
 			if (response.ok && resJson) {
-				Alert.alert("Squad member removed successfully");
+				setInfoModalContent({
+					title: "Squad member removed successfully",
+					message: "",
+					variant: "success",
+				});
+				setIsVisibleInfoModal(true);
 			} else {
 				const errorMessage =
 					resJson?.error ||
 					`There was a server error (and no resJson): ${response.status}`;
-				alert(errorMessage);
+				setInfoModalContent({
+					title: "Error",
+					message: errorMessage,
+					variant: "error",
+				});
+				setIsVisibleInfoModal(true);
 			}
 		} catch (error) {
 			console.error("Error removing squad member:", error);
-			alert("Failed to remove squad member");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to remove squad member",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
+	};
+
+	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+		return undefined;
 	};
 
 	return (
@@ -176,6 +229,7 @@ export default function AdminSettingsUserCard({
 			topChildren={topChildren}
 			screenName={"AdminSettingsUserCard"}
 			topHeight={"15%"}
+			modalComponentAndSetterObject={whichModalToDisplay()}
 		>
 			<View style={styles.container}>
 				<View style={styles.containerTop}>
