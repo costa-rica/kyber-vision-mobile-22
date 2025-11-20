@@ -5,8 +5,6 @@ import {
 	Dimensions,
 	FlatList,
 	TouchableOpacity,
-	Modal,
-	Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
@@ -15,6 +13,7 @@ import { RootState, AppDispatch } from "../../types/store";
 import ButtonKvStd from "../../components/buttons/ButtonKvStd";
 import { updateSessionsArray } from "../../reducers/script";
 import ModalCreateSession from "../../components/modals/ModalCreateSession";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../types/navigation";
 
@@ -42,6 +41,12 @@ export default function ScriptingLiveSelectSession({
 
 	const [isVisibleModalCreateSession, setIsVisibleModalCreateSession] =
 		useState(false);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+	});
 
 	const topChildren = (
 		<View style={styles.vwTopChildren}>
@@ -62,7 +67,12 @@ export default function ScriptingLiveSelectSession({
 		)[0];
 
 		if (!selectedTeam) {
-			Alert.alert("Error", "No team selected");
+			setInfoModalContent({
+				title: "Error",
+				message: "No team selected",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 			return;
 		}
 
@@ -96,7 +106,12 @@ export default function ScriptingLiveSelectSession({
 			}
 		} catch (error) {
 			console.error("Failed to fetch sessions:", error);
-			Alert.alert("Error", "Failed to fetch sessions");
+			setInfoModalContent({
+				title: "Error",
+				message: "Failed to fetch sessions",
+				variant: "error",
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -114,11 +129,44 @@ export default function ScriptingLiveSelectSession({
 		navigation.navigate("ScriptingLiveSelectPlayers");
 	};
 
+	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => setIsVisibleInfoModal(false)}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
+		if (isVisibleModalCreateSession) {
+			return {
+				modalComponent: (
+					<ModalCreateSession
+						isVisibleModalCreateSession={isVisibleModalCreateSession}
+						setIsVisibleModalCreateSession={setIsVisibleModalCreateSession}
+					/>
+				),
+				useState: isVisibleModalCreateSession,
+				useStateSetter: () => setIsVisibleModalCreateSession(false),
+			};
+		}
+
+		return undefined;
+	};
+
 	return (
 		<ScreenFrameWithTopChildrenSmall
 			navigation={navigation}
 			topChildren={topChildren}
 			sizeOfLogo={0}
+			modalComponentAndSetterObject={whichModalToDisplay()}
 		>
 			<View style={styles.container}>
 				<View style={styles.containerTop}>
@@ -167,21 +215,6 @@ export default function ScriptingLiveSelectSession({
 					</View>
 				</View>
 			</View>
-			{isVisibleModalCreateSession && (
-				<Modal
-					visible={isVisibleModalCreateSession}
-					transparent={true}
-					animationType="fade"
-					onRequestClose={() => setIsVisibleModalCreateSession(false)}
-				>
-					<View style={styles.modalOverlay}>
-						<ModalCreateSession
-							isVisibleModalCreateSession={isVisibleModalCreateSession}
-							setIsVisibleModalCreateSession={setIsVisibleModalCreateSession}
-						/>
-					</View>
-				</Modal>
-			)}
 		</ScreenFrameWithTopChildrenSmall>
 	);
 }
@@ -263,11 +296,5 @@ const styles = StyleSheet.create({
 		width: "100%",
 		gap: 10,
 		marginBottom: 10,
-	},
-	modalOverlay: {
-		flex: 1,
-		backgroundColor: "rgba(0, 0, 0, 0.5)",
-		justifyContent: "center",
-		alignItems: "center",
 	},
 });
