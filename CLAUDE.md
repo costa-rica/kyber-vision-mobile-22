@@ -36,7 +36,12 @@ This is a React Native Expo TypeScript app. The main entry point is `src/app/ind
 
 ### Component Conventions
 
-- **ScreenFrame**: This component is used for maintaining consistency amongst screens in terms of screen framing - including a back button and a background image (top children prop).
+- **ScreenFrame**: Components in `src/components/screen-frames/` standardize screen layout and handle modal presentation. Four variants exist:
+  - `ScreenFrame` - Basic frame with back button
+  - `ScreenFrameWithTopChildren` - Includes top section for custom content
+  - `ScreenFrameWithTopChildrenSmall` - Smaller top section variant
+  - `ScreenFrameWithTopChildrenSmallLandscape` - Landscape orientation variant
+  - **Modal presentation**: Modals should be presented through ScreenFrame components rather than directly. Use `modalComponentAndSetterObject` property (most frames) or `isVisibleModal`/`setDisplayModal`/`modalComponent` properties(`ScreenFrameWithTopChildren`). The frame handles Modal wrapper and overlay management.
 - **ButtonKvImage**: Custom button component for image-based buttons
 - **ModalInformationOk**: Use instead of Alert.alert for simple "OK" confirmations. Supports info, success, error, and warning variants.
 - **ModalInformationYesOrNo**: Use instead of Alert.alert for Yes/No confirmation dialogs.
