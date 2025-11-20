@@ -5,7 +5,6 @@ import {
 	FlatList,
 	TouchableOpacity,
 	TextInput,
-	Alert,
 	ViewStyle,
 	TextStyle,
 	ListRenderItem,
@@ -17,6 +16,7 @@ import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ModalTeamAddPlayer from "../../components/modals/ModalTeamAddPlayer";
 import ModalTeamYesNo from "../../components/modals/ModalTeamYesNo";
+import ModalInformationOk from "../../components/modals/ModalInformationOk";
 import {
 	updatePlayersArray,
 	updateSelectedPlayerObject,
@@ -55,6 +55,13 @@ export default function CreateTeam({ navigation }: CreateTeamProps) {
 		useState(false);
 	const [isVisibleRemovePlayerModal, setIsVisibleRemovePlayerModal] =
 		useState(false);
+	const [isVisibleInfoModal, setIsVisibleInfoModal] = useState(false);
+	const [infoModalContent, setInfoModalContent] = useState({
+		title: "",
+		message: "",
+		variant: "info" as "info" | "success" | "error" | "warning",
+		onCloseCallback: undefined as (() => void) | undefined,
+	});
 
 	const topChildren = (
 		<View style={styles.vwTopChildren}>
@@ -147,14 +154,26 @@ export default function CreateTeam({ navigation }: CreateTeamProps) {
 		);
 
 		if (playersArrayMinusAddPlayer.length === 0) {
-			alert("Please add at least one player to the team.");
+			setInfoModalContent({
+				title: "Required",
+				message: "Please add at least one player to the team.",
+				variant: "warning",
+				onCloseCallback: undefined,
+			});
+			setIsVisibleInfoModal(true);
 			return;
 		}
 		if (
 			teamReducer.teamDetails?.teamName === "" ||
 			!teamReducer.teamDetails?.teamName
 		) {
-			alert("Please enter a team name.");
+			setInfoModalContent({
+				title: "Required",
+				message: "Please enter a team name.",
+				variant: "warning",
+				onCloseCallback: undefined,
+			});
+			setIsVisibleInfoModal(true);
 			return;
 		}
 
@@ -188,17 +207,24 @@ export default function CreateTeam({ navigation }: CreateTeamProps) {
 			dispatch(updateTeamsArray(tempArray));
 			dispatch(updatePlayersArray([]));
 			dispatch(updateTeamDetails(null));
-			Alert.alert("Team created successfully", "", [
-				{
-					text: "OK",
-					onPress: () => navigation.goBack(),
-				},
-			]);
+			setInfoModalContent({
+				title: "Team created successfully",
+				message: "",
+				variant: "success",
+				onCloseCallback: () => navigation.goBack(),
+			});
+			setIsVisibleInfoModal(true);
 		} else {
 			const errorMessage =
 				resJson?.error ||
 				`There was a server error (and no resJson): ${response.status}`;
-			alert(errorMessage);
+			setInfoModalContent({
+				title: "Error",
+				message: errorMessage,
+				variant: "error",
+				onCloseCallback: undefined,
+			});
+			setIsVisibleInfoModal(true);
 		}
 	};
 
@@ -215,6 +241,26 @@ export default function CreateTeam({ navigation }: CreateTeamProps) {
 	};
 
 	const whichModalToDisplay = () => {
+		if (isVisibleInfoModal) {
+			return {
+				modalComponent: (
+					<ModalInformationOk
+						title={infoModalContent.title}
+						message={infoModalContent.message}
+						variant={infoModalContent.variant}
+						onClose={() => {
+							setIsVisibleInfoModal(false);
+							if (infoModalContent.onCloseCallback) {
+								infoModalContent.onCloseCallback();
+							}
+						}}
+					/>
+				),
+				useState: isVisibleInfoModal,
+				useStateSetter: () => setIsVisibleInfoModal(false),
+			};
+		}
+
 		if (isVisibleModalTeamAddPlayer) {
 			return {
 				modalComponent: (
@@ -340,10 +386,13 @@ export default function CreateTeam({ navigation }: CreateTeamProps) {
 						onPress={() => {
 							console.log("Create Team");
 							if (teamReducer.playersArray.length < 6) {
-								Alert.alert(
-									"Error",
-									"You must have at least 6 players on a team"
-								);
+								setInfoModalContent({
+									title: "Error",
+									message: "You must have at least 6 players on a team",
+									variant: "warning",
+									onCloseCallback: undefined,
+								});
+								setIsVisibleInfoModal(true);
 								return;
 							}
 							handleCreateTeam();
