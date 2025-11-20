@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, Alert, ViewStyle } from "react-native";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
 import ModalInformationOk from "../../components/modals/ModalInformationOk";
+import ModalInformationYesNoCancel from "../../components/modals/ModalInformationYesNoCancel";
 import ScriptingLivePortrait from "../../components/scripting/ScriptingLivePortrait";
 import ScriptingLiveLandscape from "../../components/scripting/ScriptingLiveLandscape";
 import {
@@ -84,6 +85,9 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
     message: "",
     variant: "info" as "info" | "success" | "error" | "warning",
   });
+
+  const [isVisibleRallyServerModal, setIsVisibleRallyServerModal] = useState(false);
+  const rallyServerResolverRef = useRef<((value: "analyzed" | "opponent" | null) => void) | null>(null);
 
   // Set only one to true all others to false
   const setDropdownVisibility = (dropdownName: string) => {
@@ -197,20 +201,8 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
 
   const askCurrentRallyServer = (): Promise<"analyzed" | "opponent" | null> =>
     new Promise((resolve) => {
-      Alert.alert(
-        "Current rally server not assigned",
-        "Who should be the current rally server?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => navigation.goBack(),
-          },
-          { text: "Analyzed", onPress: () => resolve("analyzed") },
-          { text: "Opponent", onPress: () => resolve("opponent") },
-        ],
-        { cancelable: true, onDismiss: () => resolve(null) } // Android back/outside tap
-      );
+      rallyServerResolverRef.current = resolve;
+      setIsVisibleRallyServerModal(true);
     });
   useEffect(() => {
     if (serverStatusRequiredFlag) {
@@ -1216,6 +1208,52 @@ export default function ScriptingLive({ navigation }: ScriptingLiveProps) {
   const [isVisibleCourtLines, setIsVisibleCourtLines] = useState(true);
 
   const whichModalToDisplay = () => {
+    if (isVisibleRallyServerModal) {
+      return {
+        modalComponent: (
+          <ModalInformationYesNoCancel
+            title="Current rally server not assigned"
+            message="Who should be the current rally server?"
+            yesButtonText="Analyzed"
+            noButtonText="Opponent"
+            cancelButtonText="Cancel"
+            onYes={() => {
+              if (rallyServerResolverRef.current) {
+                rallyServerResolverRef.current("analyzed");
+              }
+              setIsVisibleRallyServerModal(false);
+            }}
+            onNo={() => {
+              if (rallyServerResolverRef.current) {
+                rallyServerResolverRef.current("opponent");
+              }
+              setIsVisibleRallyServerModal(false);
+            }}
+            onCancel={() => {
+              if (rallyServerResolverRef.current) {
+                rallyServerResolverRef.current(null);
+              }
+              setIsVisibleRallyServerModal(false);
+              navigation.goBack();
+            }}
+            onClose={() => {
+              if (rallyServerResolverRef.current) {
+                rallyServerResolverRef.current(null);
+              }
+              setIsVisibleRallyServerModal(false);
+            }}
+          />
+        ),
+        useState: isVisibleRallyServerModal,
+        useStateSetter: () => {
+          if (rallyServerResolverRef.current) {
+            rallyServerResolverRef.current(null);
+          }
+          setIsVisibleRallyServerModal(false);
+        },
+      };
+    }
+
     if (isVisibleInfoModal) {
       return {
         modalComponent: (
