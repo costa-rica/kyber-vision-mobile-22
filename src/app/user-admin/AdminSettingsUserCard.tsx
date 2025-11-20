@@ -6,7 +6,6 @@ import {
 	Image,
 	Dimensions,
 	TouchableOpacity,
-	Alert,
 	ImageBackground,
 } from "react-native";
 import ScreenFrameWithTopChildrenSmall from "../../components/screen-frames/ScreenFrameWithTopChildrenSmall";
@@ -16,6 +15,7 @@ import BtnVisibilityUp from "../../assets/images/review/btnVisibilityUp.svg";
 import BtnUserCardRemoveUser from "../../assets/images/user-admin/btnUserCardRemoveUser.svg";
 import { updateSquadMembersArray, SquadMember } from "../../reducers/team";
 import ModalInformationOk from "../../components/modals/ModalInformationOk";
+import ModalInformationYesOrNo from "../../components/modals/ModalInformationYesOrNo";
 import { RootState } from "../../types/store";
 import { AdminSettingsUserCardScreenProps } from "../../types/navigation";
 
@@ -40,6 +40,8 @@ export default function AdminSettingsUserCard({
 		message: "",
 		variant: "info" as "info" | "success" | "error" | "warning",
 	});
+	const [isVisibleConfirmModal, setIsVisibleConfirmModal] = useState(false);
+	const [userToDelete, setUserToDelete] = useState<SquadMember | null>(null);
 
 	const selectedTeam = teamReducer.teamsArray.filter((team) => team.selected)[0];
 	const selectedTeamId = teamReducer.teamsArray.find((t) => t.selected)?.id;
@@ -134,22 +136,8 @@ export default function AdminSettingsUserCard({
 	};
 
 	const confirmDeleteSquadMember = (contractTeamUserObject: SquadMember): void => {
-		Alert.alert(
-			"Are you sure?",
-			`you want to delete ${contractTeamUserObject.username} (user id: ${contractTeamUserObject.userId}) from the squad?`,
-			[
-				{ text: "No", style: "cancel" },
-				{
-					text: "Yes",
-					style: "destructive",
-					onPress: () => {
-						handleRemoveSquadMember(contractTeamUserObject);
-						navigation.goBack();
-					},
-				},
-			],
-			{ cancelable: true }
-		);
+		setUserToDelete(contractTeamUserObject);
+		setIsVisibleConfirmModal(true);
 	};
 
 	const handleRemoveSquadMember = async (contractTeamUserObject: SquadMember): Promise<void> => {
@@ -206,6 +194,35 @@ export default function AdminSettingsUserCard({
 	};
 
 	const whichModalToDisplay = () => {
+		if (isVisibleConfirmModal && userToDelete) {
+			return {
+				modalComponent: (
+					<ModalInformationYesOrNo
+						title="Are you sure?"
+						message={`you want to delete ${userToDelete.username} (user id: ${userToDelete.userId}) from the squad?`}
+						yesButtonStyle="danger"
+						onYes={() => {
+							handleRemoveSquadMember(userToDelete);
+							navigation.goBack();
+						}}
+						onNo={() => {
+							setIsVisibleConfirmModal(false);
+							setUserToDelete(null);
+						}}
+						onClose={() => {
+							setIsVisibleConfirmModal(false);
+							setUserToDelete(null);
+						}}
+					/>
+				),
+				useState: isVisibleConfirmModal,
+				useStateSetter: () => {
+					setIsVisibleConfirmModal(false);
+					setUserToDelete(null);
+				},
+			};
+		}
+
 		if (isVisibleInfoModal) {
 			return {
 				modalComponent: (
