@@ -28,6 +28,7 @@ import ButtonKvNoDefaultTextOnly from "../../components/buttons/ButtonKvNoDefaul
 import ModalTeamAddPlayer from "../../components/modals/ModalTeamAddPlayer";
 import ModalAdminSettingsInviteToSquad from "../../components/modals/ModalAdminSettingsInviteToSquad";
 import ModalInformationOk from "../../components/modals/ModalInformationOk";
+import ModalInformationYesOrNo from "../../components/modals/ModalInformationYesOrNo";
 import { RootState } from "../../types/store";
 import { AdminSettingsScreenProps } from "../../types/navigation";
 import { PlayerObject } from "../../types/user-admin";
@@ -57,6 +58,10 @@ export default function AdminSettings({
 		message: "",
 		variant: "info" as "info" | "success" | "error" | "warning",
 	});
+	const [isVisibleConfirmDeletePlayer, setIsVisibleConfirmDeletePlayer] = useState(false);
+	const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+	const [isVisibleConfirmDeleteSquadMember, setIsVisibleConfirmDeleteSquadMember] = useState(false);
+	const [squadMemberToDelete, setSquadMemberToDelete] = useState<SquadMember | null>(null);
 
 	// Triggers whenever the screen is focused
 	useFocusEffect(
@@ -248,6 +253,70 @@ export default function AdminSettings({
 	};
 
 	const whichModalToDisplay = (): ModalComponentAndSetterObject | undefined => {
+		if (isVisibleConfirmDeletePlayer && playerToDelete) {
+			const idForMsg = teamReducer.selectedPlayerObject?.id ?? playerToDelete.id;
+			const firstName = teamReducer.selectedPlayerObject?.firstName ?? playerToDelete.firstName;
+			const lastName = teamReducer.selectedPlayerObject?.lastName ?? playerToDelete.lastName;
+
+			return {
+				modalComponent: (
+					<ModalInformationYesOrNo
+						title="Are you sure?"
+						message={`you want to delete ${firstName} ${lastName} (player id: ${idForMsg})?`}
+						yesButtonStyle="danger"
+						onYes={() => {
+							handleRemovePlayer(playerToDelete);
+							setIsVisibleConfirmDeletePlayer(false);
+							setPlayerToDelete(null);
+						}}
+						onNo={() => {
+							setIsVisibleConfirmDeletePlayer(false);
+							setPlayerToDelete(null);
+						}}
+						onClose={() => {
+							setIsVisibleConfirmDeletePlayer(false);
+							setPlayerToDelete(null);
+						}}
+					/>
+				),
+				useState: isVisibleConfirmDeletePlayer,
+				useStateSetter: () => {
+					setIsVisibleConfirmDeletePlayer(false);
+					setPlayerToDelete(null);
+				},
+			};
+		}
+
+		if (isVisibleConfirmDeleteSquadMember && squadMemberToDelete) {
+			return {
+				modalComponent: (
+					<ModalInformationYesOrNo
+						title="Are you sure?"
+						message={`you want to delete ${squadMemberToDelete.username} (user id: ${squadMemberToDelete.userId}) from the squad?`}
+						yesButtonStyle="danger"
+						onYes={() => {
+							handleRemoveSquadMember(squadMemberToDelete);
+							setIsVisibleConfirmDeleteSquadMember(false);
+							setSquadMemberToDelete(null);
+						}}
+						onNo={() => {
+							setIsVisibleConfirmDeleteSquadMember(false);
+							setSquadMemberToDelete(null);
+						}}
+						onClose={() => {
+							setIsVisibleConfirmDeleteSquadMember(false);
+							setSquadMemberToDelete(null);
+						}}
+					/>
+				),
+				useState: isVisibleConfirmDeleteSquadMember,
+				useStateSetter: () => {
+					setIsVisibleConfirmDeleteSquadMember(false);
+					setSquadMemberToDelete(null);
+				},
+			};
+		}
+
 		if (isVisibleInfoModal) {
 			return {
 				modalComponent: (
@@ -480,45 +549,15 @@ export default function AdminSettings({
 	const confirmDeletePlayer = (player: Player): void => {
 		// keep your global selection in sync if other parts read it
 		dispatch(updateSelectedPlayerObject(player));
-
-		// Use the reducer value if present; otherwise fall back to the tapped item
-		const idForMsg = teamReducer.selectedPlayerObject?.id ?? player.id;
-		const firstName =
-			teamReducer.selectedPlayerObject?.firstName ?? player.firstName;
-		const lastName =
-			teamReducer.selectedPlayerObject?.lastName ?? player.lastName;
-
-		Alert.alert(
-			"Are you sure?",
-			`you want to delete ${firstName} ${lastName} (player id: ${idForMsg})?`,
-			[
-				{ text: "No", style: "cancel" },
-				{
-					text: "Yes",
-					style: "destructive",
-					onPress: () => handleRemovePlayer(player),
-				},
-			],
-			{ cancelable: true }
-		);
+		setPlayerToDelete(player);
+		setIsVisibleConfirmDeletePlayer(true);
 	};
 
 	const confirmDeleteSquadMember = (
 		contractTeamUserObject: SquadMember
 	): void => {
-		Alert.alert(
-			"Are you sure?",
-			`you want to delete ${contractTeamUserObject.username} (user id: ${contractTeamUserObject.userId}) from the squad?`,
-			[
-				{ text: "No", style: "cancel" },
-				{
-					text: "Yes",
-					style: "destructive",
-					onPress: () => handleRemoveSquadMember(contractTeamUserObject),
-				},
-			],
-			{ cancelable: true }
-		);
+		setSquadMemberToDelete(contractTeamUserObject);
+		setIsVisibleConfirmDeleteSquadMember(true);
 	};
 
 	const handleRemoveSquadMember = async (
